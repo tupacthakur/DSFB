@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-base:        #070b12;
+  --bg-surface:     #0d1520;
+  --bg-elevated:    #111827;
+  --bg-overlay:     #0a1018;
+
+  /* Borders */
+  --border-subtle:  #1a2535;
+  --border-default: #1e293b;
+  --border-strong:  #2d3f52;
+
+  /* Brand */
+  --green:          #63d792;
+  --green-dim:      rgba(99,215,146,0.12);
+  --green-border:   rgba(99,215,146,0.25);
+
+  /* Semantic */
+  --amber:          #fbbf24;
+  --red:            #f87171;
+  --blue:           #60a5fa;
+  --purple:         #a78bfa;
+  --teal:           #2dd4bf;
+
+  /* Text */
+  --text-primary:   #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted:     #475569;
+  --text-ghost:     #334155;
+
+  /* Chart palette */
+  --chart-1: #63d792;
+  --chart-2: #60a5fa;
+  --chart-3: #fbbf24;
+  --chart-4: #f87171;
+  --chart-5: #a78bfa;
+  --chart-6: #2dd4bf;
+  --chart-7: #fb923c;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --bg-base:        #f1f5f9;
+  --bg-surface:     #ffffff;
+  --bg-elevated:    #f8fafc;
+  --bg-overlay:     #ffffff;
+
+  --border-subtle:  #e2e8f0;
+  --border-default: #cbd5e1;
+  --border-strong:  #94a3b8;
+
+  --green:          #16a34a;
+  --green-dim:      rgba(22,163,74,0.1);
+  --green-border:   rgba(22,163,74,0.3);
+
+  --amber:          #d97706;
+  --red:            #dc2626;
+  --blue:           #2563eb;
+  --purple:         #7c3aed;
+  --teal:           #0d9488;
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #64748b;
+  --text-ghost:     #94a3b8;
+
+  --chart-1: #16a34a;
+  --chart-2: #2563eb;
+  --chart-3: #d97706;
+  --chart-4: #dc2626;
+  --chart-5: #7c3aed;
+  --chart-6: #0d9488;
+  --chart-7: #ea580c;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.chat-markdown {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.chat-markdown code {
+  background: var(--bg-elevated);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.chat-markdown pre {
+  background: var(--bg-overlay);
+  padding: 12px;
+  border-left: 2px solid var(--green);
+  border-radius: 0 4px 4px 0;
+  overflow-x: auto;
+}
+.chat-markdown pre code {
+  background: none;
+  padding: 0;
+}
+.chat-markdown strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.chat-markdown ul {
+  list-style: none;
+  padding-left: 0;
+}
+.chat-markdown ul li::before {
+  content: '•';
+  color: var(--green);
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+/* Executive page print */
+@media print {
+  aside,
+  nav,
+  .topbar,
+  .no-print {
+    display: none !important;
+  }
+  @page {
+    margin: 20mm;
+    size: A4;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .card {
+    border: 1px solid #ddd !important;
+    background: white !important;
+  }
+  .executive-page {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .executive-print-header {
+    display: block !important;
+  }
+}
+.executive-print-header {
+  display: none;
+}

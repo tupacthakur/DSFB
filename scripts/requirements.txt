@@ -1,0 +1,4 @@
+# For instant_analysis.py (Excel-style analysis + graphs)
+pandas>=2.0
+matplotlib>=3.7
+openpyxl>=3.1
