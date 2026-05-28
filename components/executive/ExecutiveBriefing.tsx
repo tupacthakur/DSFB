@@ -12,7 +12,7 @@ import { RefreshCw, Copy, FileDown } from 'lucide-react';
 export type ExecutivePeriod = 'week' | 'month' | 'quarter' | 'ytd';
 
 const EXECUTIVE_BRIEFING_SYSTEM_ADDITION = (period: string) => `
-Generate an executive briefing for the restaurant operator. Format it exactly as follows with these exact markdown headers:
+Generate an executive briefing for the restaurant operator. Format it exactly as follows with these exact markdown headers (in this order):
 
 ## This ${period} at a Glance
 3 sentences. Revenue, prime cost, and the single biggest risk. Include actual numbers.
@@ -29,6 +29,24 @@ The easiest improvement with positive ROI available right now. Be specific — w
 
 ## One Benchmark to Know
 A single industry comparison that contextualizes performance. Show the formula and the comparison.
+
+## Liquidity Management
+Address in one tight subsection (4–6 sentences, bullets allowed): payout timing (aggregators, vendors, payroll if inferrable), cash flow vs demand (inflows/outflows rhythm), and working capital risk. Use ₹. If the uploaded context lacks settlement or bank data, say exactly what is missing and what to start tracking.
+
+## Inventory Analytics
+Interpret inventory-linked performance: tie food cost, waste, and purchasing cadence to stock risk (overstock, spoilage, stockout). If no SKU-level inventory file is in context, infer cautiously from waste_pct, category P&L, and daily cost ratio—and state limitations.
+
+## Sales Data Interpretation
+Cover franchise or multi-unit rollup when the context suggests multiple sites or channels; otherwise state consolidated single-site view. Include cost per SKU vs selling price where menu/category data exists, margin by category, and transit or lead-time effects on margin (delivery commissions, supply delays) when inferrable from context.
+
+## Bottom Line (Profit · Dispatch · Franchise · Timeframe)
+Give an explicit expected-output block for the selected ${period}: profit or EBITDA-style margin proxy in ₹ and/or %, dispatch/third-party fee drag if data supports an estimate, franchise vs company-owned reporting caveat if relevant, and a clear timeframe label (this ${period}) with what "good" looks like numerically at period end.
+
+## Checklist
+5–7 markdown bullet items starting with "- [ ]" that the operator can execute this week. Each bullet must tie to a metric or ₹ impact already mentioned above.
+
+## Timeline
+Three subheadings as bold inline labels in one section: **This week** (2 bullets), **30 days** (2 bullets), **90 days** (2 bullets). Each bullet: action + expected measurable outcome.
 
 Use actual metric values throughout. No vague language. Numbers and actions only. Use Indian Rupees (₹) for all amounts.`;
 
@@ -96,7 +114,7 @@ export function ExecutiveBriefing({ period }: ExecutiveBriefingProps) {
   useEffect(() => {
     fetchBrief();
     return () => abortRef.current?.abort();
-  }, [period]);
+  }, [fetchBrief]);
 
   const handleCopy = useCallback(() => {
     if (content) navigator.clipboard.writeText(content);
@@ -165,7 +183,19 @@ export function ExecutiveBriefing({ period }: ExecutiveBriefingProps) {
       )}
       {loading && !content && (
         <div className="executive-brief-skeleton" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {['This period at a Glance', 'Top Priority', 'Quick Win Available', 'Watch List', 'One Benchmark to Know'].map((h) => (
+          {[
+            'This period at a Glance',
+            'Top Priority',
+            'Quick Win Available',
+            'Watch List',
+            'One Benchmark to Know',
+            'Liquidity Management',
+            'Inventory Analytics',
+            'Sales Data Interpretation',
+            'Bottom Line (Profit · Dispatch · Franchise · Timeframe)',
+            'Checklist',
+            'Timeline',
+          ].map((h) => (
             <div key={h}>
               <div style={{ height: 14, width: 180, background: 'var(--border-subtle)', borderRadius: 4, marginBottom: 8 }} />
               <div style={{ height: 12, background: 'var(--border-subtle)', borderRadius: 4, width: '90%' }} />

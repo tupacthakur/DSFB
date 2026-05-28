@@ -38,7 +38,7 @@ export function StrategicIntelligence() {
   }, []);
   const avgCheck = metrics.avg_check ?? 28;
   const seats = profile?.seatingCapacity ?? 80;
-  const opts = { avgCheck, seats };
+  const opts = useMemo(() => ({ avgCheck, seats }), [avgCheck, seats]);
   const symbolic = useMemo(() => evaluateRules(metrics as Record<string, number>), [metrics]);
   const risksWithImpact = useMemo(() => {
     return symbolic.fired
@@ -54,10 +54,10 @@ export function StrategicIntelligence() {
         };
       })
       .sort((a, b) => b.impactNum - a.impactNum);
-  }, [symbolic.fired, weeklyRevenue, opts.avgCheck, opts.seats]);
+  }, [symbolic.fired, weeklyRevenue, opts]);
   const opportunities = useMemo(
     () => identifyOpportunities(metrics as Record<string, number>, weeklyRevenue, opts),
-    [metrics, weeklyRevenue, opts.avgCheck, opts.seats]
+    [metrics, weeklyRevenue, opts]
   );
 
   const [showMethodology, setShowMethodology] = useState(false);

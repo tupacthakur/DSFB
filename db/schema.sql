@@ -1,5 +1,7 @@
 -- Koravo analytics schema (PostgreSQL / Neon / Supabase compatible)
--- Purpose: scalable F&B analytics with fact + dimension modeling.
+-- Purpose: model real uploaded source data from:
+-- 1) Rista POS sales audit exports
+-- 2) Swiggy annexure / settlement exports
 
 create extension if not exists "pgcrypto";
 
@@ -29,54 +31,44 @@ create table if not exists dim_channel (
   unique (tenant_id, code)
 );
 
-create table if not exists dim_product (
+create table if not exists dim_customer (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references tenants(id) on delete cascade,
-  sku text not null,
-  name text not null,
-  category text,
-  subcategory text,
-  is_active boolean not null default true,
-  unique (tenant_id, sku)
+  source_customer_id text,
+  customer_name text,
+  customer_phone text,
+  unique (tenant_id, source_customer_id)
 );
 
-create table if not exists fact_sales (
+create table if not exists fact_orders (
   id bigserial primary key,
   tenant_id uuid not null references tenants(id) on delete cascade,
   location_id uuid references dim_location(id),
   channel_id uuid references dim_channel(id),
-  product_id uuid references dim_product(id),
+  customer_id uuid references dim_customer(id),
+  source_system text not null check (source_system in ('rista', 'swiggy')),
   business_date date not null,
-  order_id text not null,
-  quantity numeric(14, 3) not null default 0,
+  source_order_id text not null,
+  order_status text,
+  payment_mode text,
+  units_count numeric(14, 3) not null default 0,
+  guest_count numeric(14, 3) not null default 0,
   gross_revenue numeric(14, 2) not null default 0,
   discount_amount numeric(14, 2) not null default 0,
   net_revenue numeric(14, 2) not null default 0,
-  cogs_amount numeric(14, 2) not null default 0,
-  labor_amount numeric(14, 2) not null default 0,
-  waste_amount numeric(14, 2) not null default 0,
-  payment_delay_days int not null default 0,
+  tax_amount numeric(14, 2) not null default 0,
+  fee_amount numeric(14, 2) not null default 0,
+  cost_amount numeric(14, 2) not null default 0,
+  payout_amount numeric(14, 2) not null default 0,
+  coupon_code text,
+  last_mile_distance_km numeric(10, 3),
   created_at timestamptz not null default now()
 );
 
-create index if not exists idx_fact_sales_tenant_date on fact_sales (tenant_id, business_date desc);
-create index if not exists idx_fact_sales_tenant_product_date on fact_sales (tenant_id, product_id, business_date desc);
-create index if not exists idx_fact_sales_tenant_location_date on fact_sales (tenant_id, location_id, business_date desc);
-
-create table if not exists fact_inventory_daily (
-  id bigserial primary key,
-  tenant_id uuid not null references tenants(id) on delete cascade,
-  location_id uuid references dim_location(id),
-  product_id uuid references dim_product(id),
-  business_date date not null,
-  opening_qty numeric(14, 3) not null default 0,
-  closing_qty numeric(14, 3) not null default 0,
-  damaged_qty numeric(14, 3) not null default 0,
-  purchase_value numeric(14, 2) not null default 0,
-  stock_value numeric(14, 2) not null default 0,
-  created_at timestamptz not null default now(),
-  unique (tenant_id, location_id, product_id, business_date)
-);
+create index if not exists idx_fact_orders_tenant_date on fact_orders (tenant_id, business_date desc);
+create index if not exists idx_fact_orders_tenant_channel_date on fact_orders (tenant_id, channel_id, business_date desc);
+create index if not exists idx_fact_orders_tenant_location_date on fact_orders (tenant_id, location_id, business_date desc);
+create index if not exists idx_fact_orders_tenant_source on fact_orders (tenant_id, source_system, business_date desc);
 
 create table if not exists analytics_kpi_daily (
   id bigserial primary key,
@@ -89,6 +81,8 @@ create table if not exists analytics_kpi_daily (
   avg_check numeric(14, 2),
   table_turns numeric(8, 3),
   repeat_rate_pct numeric(8, 3),
+  cancel_rate_pct numeric(8, 3),
+  marketplace_fee_pct numeric(8, 3),
   created_at timestamptz not null default now(),
   unique (tenant_id, location_id, business_date)
 );

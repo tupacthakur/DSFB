@@ -12,6 +12,12 @@ export default function ChatPage() {
         <SessionSidebar />
         <ErrorBoundary level="section">
           <div className="flex flex-1 flex-col min-h-0 min-w-0">
+            <div className="info-banner mx-3 mt-3 mb-2 hidden md:block">
+              <p className="text-sm font-medium text-[var(--text-primary)]">SAGE command center</p>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                Ask for diagnostics, quantify financial impact, then convert recommendations into 7-day and 30-day execution steps.
+              </p>
+            </div>
             <Suspense fallback={<div className="flex flex-1 items-center justify-center text-[var(--text-muted)]">Loading…</div>}>
               <ChatWindow />
             </Suspense>

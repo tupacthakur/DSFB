@@ -84,6 +84,36 @@ body {
   color: var(--text-primary);
 }
 
+/* Tactile interaction + information hierarchy utilities */
+.surface-card {
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.surface-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+.tap-feedback {
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.tap-feedback:active {
+  transform: scale(0.985);
+}
+
+.info-banner {
+  border: 1px solid var(--green-border);
+  background: linear-gradient(180deg, var(--green-dim), rgba(0, 0, 0, 0));
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
 .chat-markdown {
   font-size: 0.875rem;
   line-height: 1.5;
@@ -148,6 +178,10 @@ body {
   }
   .executive-print-header {
     display: block !important;
+  }
+  .pl-snapshot-table {
+    min-width: 0 !important;
+    font-size: 10px;
   }
 }
 .executive-print-header {

@@ -83,6 +83,9 @@ export default function HomePage() {
               <Link href="/executive" className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)] sm:min-h-0 sm:min-w-0">
                 Executive
               </Link>
+              <Link href="/decisions" className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)] sm:min-h-0 sm:min-w-0">
+                Decisions
+              </Link>
               <Link href="/chat" className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)] sm:min-h-0 sm:min-w-0">
                 SAGE Chat
               </Link>
@@ -95,12 +98,18 @@ export default function HomePage() {
         </header>
 
         <main className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
+          <section className="info-banner mb-5">
+            <p className="text-sm font-medium text-[var(--text-primary)]">Live operating summary</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              This page tracks real uploaded data only. Use Analytics for drill-down, Executive for the command centre, Decisions for the audit log, and SAGE Chat for action plans.
+            </p>
+          </section>
           <section className="mb-8">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--text-muted)]">
               Overview
             </h2>
             <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
+              <div className="surface-card tap-feedback p-4">
                 <div className="flex items-center gap-2 text-[var(--text-muted)]">
                   <BarChart3 className="h-4 w-4" />
                   <span className="text-xs font-medium">Avg daily revenue</span>
@@ -110,7 +119,7 @@ export default function HomePage() {
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--text-muted)]">Last 30 days</p>
               </div>
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
+              <div className="surface-card tap-feedback p-4">
                 <div className="flex items-center gap-2 text-[var(--text-muted)]">
                   <TrendingUp className="h-4 w-4" />
                   <span className="text-xs font-medium">WoW change</span>
@@ -124,14 +133,14 @@ export default function HomePage() {
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--text-muted)]">Week over week</p>
               </div>
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
+              <div className="surface-card tap-feedback p-4">
                 <div className="text-xs font-medium text-[var(--text-muted)]">Gross margin</div>
                 <p className="mt-1 text-xl font-semibold text-[var(--text-primary)]">
                   {formatPercent(avgMarginPct)}
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--text-muted)]">Blended</p>
               </div>
-              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
+              <div className="surface-card tap-feedback p-4">
                 <div className="text-xs font-medium text-[var(--text-muted)]">
                   {METRIC_LABELS.food_cost}
                 </div>

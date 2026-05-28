@@ -4,10 +4,12 @@ import { useState, useCallback, useEffect } from 'react';
 import { Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { useSettingsStore } from '@/lib/store/settingsStore';
 import { validateAPIKey } from '@/lib/api/sage';
+import { validateRistaConnection } from '@/lib/api/rista';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils/cn';
 
 type KeyStatus = 'connected' | 'invalid' | 'untested' | 'testing';
+type RistaStatus = KeyStatus;
 
 function formatSavedAt(iso: string): string {
   if (!iso) return 'Never';
@@ -23,20 +25,28 @@ export function ApiKeyVault() {
     anthropicKey,
     keySource,
     openaiKey,
-    posEndpoint,
     reservationKey,
     savedAt,
     storageError,
     setAnthropicKey,
     setOpenaiKey,
-    setPosEndpoint,
+    ristaApiKey,
+    ristaSecretKey,
+    ristaKeySource,
+    setRistaApiKey,
+    setRistaSecretKey,
     setReservationKey,
     saveToStorage,
     clearStorageError,
   } = useSettingsStore();
 
   const [localKey, setLocalKey] = useState(anthropicKey);
+  const [localRistaApi, setLocalRistaApi] = useState(ristaApiKey);
+  const [localRistaSecret, setLocalRistaSecret] = useState(ristaSecretKey);
   const [showAnthropic, setShowAnthropic] = useState(false);
+  const [showRistaSecret, setShowRistaSecret] = useState(false);
+  const [ristaStatus, setRistaStatus] = useState<RistaStatus>('untested');
+  const [ristaError, setRistaError] = useState<string | null>(null);
   const [showOpenai, setShowOpenai] = useState(false);
   const [showReservation, setShowReservation] = useState(false);
   const [status, setStatus] = useState<KeyStatus>('untested');
@@ -46,6 +56,11 @@ export function ApiKeyVault() {
   useEffect(() => {
     setLocalKey(anthropicKey);
   }, [anthropicKey]);
+
+  useEffect(() => {
+    setLocalRistaApi(ristaApiKey);
+    setLocalRistaSecret(ristaSecretKey);
+  }, [ristaApiKey, ristaSecretKey]);
 
   const handleTest = useCallback(async () => {
     const trimmed = localKey.trim();
@@ -76,6 +91,50 @@ export function ApiKeyVault() {
       setToastMsg('Could not reach server to validate key.');
     }
   }, [localKey, keySource, setAnthropicKey, saveToStorage]);
+
+  const handleRistaTest = useCallback(async () => {
+    const api = localRistaApi.trim();
+    const secret = localRistaSecret.trim();
+    if (ristaKeySource === 'settings' && (!api || !secret)) {
+      setRistaError('Enter API key and secret key');
+      return;
+    }
+    setRistaStatus('testing');
+    setRistaError(null);
+    if (api && secret) {
+      setRistaApiKey(api);
+      setRistaSecretKey(secret);
+      saveToStorage();
+    }
+    try {
+      const result = await validateRistaConnection();
+      if (result.valid) {
+        setRistaStatus('connected');
+        setRistaError(null);
+      } else {
+        setRistaStatus('invalid');
+        setRistaError(result.reason ?? 'Connection failed');
+      }
+    } catch {
+      setRistaStatus('untested');
+      setRistaError('Could not reach server');
+    }
+  }, [localRistaApi, localRistaSecret, ristaKeySource, setRistaApiKey, setRistaSecretKey, saveToStorage]);
+
+  const handleRistaSave = useCallback(() => {
+    const api = localRistaApi.trim();
+    const secret = localRistaSecret.trim();
+    if (!api || !secret) {
+      setRistaError('Both API key and secret key are required');
+      return;
+    }
+    setRistaError(null);
+    setRistaApiKey(api);
+    setRistaSecretKey(secret);
+    saveToStorage();
+    setRistaStatus('untested');
+    setTimeout(() => handleRistaTest(), 0);
+  }, [localRistaApi, localRistaSecret, setRistaApiKey, setRistaSecretKey, saveToStorage, handleRistaTest]);
 
   const handleSaveThenTest = useCallback(() => {
     const trimmed = localKey.trim();
@@ -183,6 +242,79 @@ export function ApiKeyVault() {
         </p>
       )}
 
+      <div className="space-y-2 border-t border-[var(--border-default)] pt-4">
+        <label className="block text-xs font-medium text-[var(--text-secondary)]">Rista API Key</label>
+        {ristaKeySource === 'env' ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-3">
+            <CheckCircle className="h-[18px] w-[18px] shrink-0 text-[var(--green)]" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-[var(--text-primary)]">Rista credentials loaded from environment</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                RISTA_API_KEY and RISTA_SECRET_KEY are set in .env.local. Sync runs from Analytics → Rista POS.
+              </p>
+            </div>
+            <span className="shrink-0 rounded bg-[var(--green)]/20 px-2 py-0.5 text-xs font-medium text-[var(--green)]">
+              ● Active
+            </span>
+          </div>
+        ) : (
+          <>
+            <p className="text-xs text-[var(--text-muted)]">
+              From Rista Access Menu. Used for branch list and sales sync (requires Sales Enterprise API licence).
+            </p>
+            <input
+              type="password"
+              value={localRistaApi}
+              onChange={(e) => setLocalRistaApi(e.target.value)}
+              placeholder="API Key (UUID)"
+              className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-primary)]"
+            />
+            <label className="block text-xs font-medium text-[var(--text-secondary)]">Rista Secret Key</label>
+            <div className="flex items-center gap-2">
+              <input
+                type={showRistaSecret ? 'text' : 'password'}
+                value={localRistaSecret}
+                onChange={(e) => setLocalRistaSecret(e.target.value)}
+                placeholder="Secret Key"
+                className="flex-1 rounded border border-[var(--border-default)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-primary)]"
+              />
+              <button
+                type="button"
+                onClick={() => setShowRistaSecret((s) => !s)}
+                className="rounded p-2 text-[var(--text-muted)] hover:bg-[var(--bg-elevated)]"
+                aria-label={showRistaSecret ? 'Hide secret' : 'Show secret'}
+              >
+                {showRistaSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRistaSave}
+                className="rounded bg-[var(--green)]/20 px-3 py-1.5 text-sm font-medium text-[var(--green)] hover:bg-[var(--green)]/30"
+              >
+                Save & Test
+              </button>
+              <button
+                type="button"
+                onClick={handleRistaTest}
+                disabled={!localRistaApi.trim() || !localRistaSecret.trim()}
+                className="rounded border border-[var(--border-default)] px-3 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] disabled:opacity-50"
+              >
+                Test Connection
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {ristaStatus === 'connected' && <span className="text-[var(--green)]">● Connected to Rista</span>}
+              {ristaStatus === 'invalid' && <span className="text-[var(--red)]">✕ {ristaError ?? 'Invalid credentials'}</span>}
+              {ristaStatus === 'untested' && <span className="text-[var(--text-muted)]">○ Not tested</span>}
+              {ristaStatus === 'testing' && <span className="text-[var(--text-muted)]">Testing…</span>}
+            </div>
+          </>
+        )}
+        {ristaError && ristaKeySource !== 'env' && <p className="text-xs text-[var(--red)]">{ristaError}</p>}
+      </div>
+
       <div className="space-y-2">
         <label className="block text-xs font-medium text-[var(--text-secondary)]">OpenAI API Key (optional)</label>
         <div className="flex items-center gap-2">
@@ -197,17 +329,6 @@ export function ApiKeyVault() {
             {showOpenai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-xs font-medium text-[var(--text-secondary)]">POS Endpoint URL</label>
-        <input
-          type="url"
-          value={posEndpoint}
-          onChange={(e) => setPosEndpoint(e.target.value)}
-          placeholder="https://..."
-          className="w-full rounded border border-[var(--border-default)] bg-[var(--bg-base)] px-3 py-2 text-sm text-[var(--text-primary)]"
-        />
       </div>
 
       <div className="space-y-2">

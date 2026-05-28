@@ -1,21 +1,36 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { useMetricsStore } from '@/lib/store/metricsStore';
 import { getAvgDailyRevenue } from '@/lib/store/metricsStore';
 import { formatCurrency, formatPercent } from '@/lib/utils/formatters';
 import { PL_METHODOLOGY } from '@/lib/executive/methodology';
-import { Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, TrendingDown, TrendingUp } from 'lucide-react';
 
 export type ExecutivePeriod = 'week' | 'month' | 'quarter' | 'ytd';
 
+const PERIOD_LABEL: Record<ExecutivePeriod, string> = {
+  week: 'Week',
+  month: 'Month',
+  quarter: 'Quarter',
+  ytd: 'YTD',
+};
+
 function periodMultiplier(period: ExecutivePeriod): number {
   switch (period) {
-    case 'week': return 7;
-    case 'month': return 30;
-    case 'quarter': return 90;
-    case 'ytd': return Math.min(365, 90 + Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 86400000));
-    default: return 30;
+    case 'week':
+      return 7;
+    case 'month':
+      return 30;
+    case 'quarter':
+      return 90;
+    case 'ytd':
+      return Math.min(
+        365,
+        90 + Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 86400000)
+      );
+    default:
+      return 30;
   }
 }
 
@@ -24,14 +39,19 @@ interface PLSnapshotProps {
   isEstimated?: boolean;
 }
 
-interface PLColumn {
+type RowKind = 'revenue' | 'deduction' | 'subtotal' | 'ebitda';
+
+interface PLRow {
+  key: string;
   label: string;
-  value: number;
+  amount: number;
   pctOfRevenue: number;
   barPct: number;
-  color: string;
+  barColor: string;
   deltaPct: number | null;
-  isSubtraction?: boolean;
+  /** For cost lines: higher delta = worse */
+  deltaIsCost: boolean;
+  kind: RowKind;
 }
 
 export function PLSnapshot({ period, isEstimated }: PLSnapshotProps) {
@@ -57,155 +77,284 @@ export function PLSnapshot({ period, isEstimated }: PLSnapshotProps) {
   const deltaFood = priorFood ? ((foodCostPct - priorFood) / priorFood) * 100 : null;
   const deltaLabor = priorLabor ? ((laborCostPct - priorLabor) / priorLabor) * 100 : null;
 
-  const columns: PLColumn[] = useMemo(() => {
-    const list: PLColumn[] = [
-      { label: 'Revenue', value: revenue, pctOfRevenue: 100, barPct: 100, color: 'var(--green)', deltaPct: null },
-      { label: '− Food Cost', value: -foodCostVal, pctOfRevenue: foodCostPct, barPct: foodCostPct, color: 'var(--red)', deltaPct: deltaFood ?? null, isSubtraction: true },
-      { label: 'Gross Profit', value: grossProfitVal, pctOfRevenue: grossProfitPct, barPct: grossProfitPct, color: 'var(--blue)', deltaPct: null },
-      { label: '− Labor Cost', value: -laborCostVal, pctOfRevenue: laborCostPct, barPct: laborCostPct, color: 'var(--red)', deltaPct: deltaLabor ?? null, isSubtraction: true },
-      { label: 'Prime Profit', value: primeProfitVal, pctOfRevenue: primeProfitPct, barPct: primeProfitPct, color: 'var(--amber)', deltaPct: null },
-      { label: '− Operating Expenses', value: -opExVal, pctOfRevenue: opExPct, barPct: opExPct, color: 'var(--red)', deltaPct: null, isSubtraction: true },
+  const rows: PLRow[] = useMemo(
+    () => [
       {
+        key: 'revenue',
+        label: 'Revenue',
+        amount: revenue,
+        pctOfRevenue: 100,
+        barPct: 100,
+        barColor: 'var(--green)',
+        deltaPct: null,
+        deltaIsCost: false,
+        kind: 'revenue',
+      },
+      {
+        key: 'food',
+        label: 'Food cost',
+        amount: -foodCostVal,
+        pctOfRevenue: foodCostPct,
+        barPct: foodCostPct,
+        barColor: 'var(--red)',
+        deltaPct: deltaFood,
+        deltaIsCost: true,
+        kind: 'deduction',
+      },
+      {
+        key: 'gross',
+        label: 'Gross profit',
+        amount: grossProfitVal,
+        pctOfRevenue: grossProfitPct,
+        barPct: grossProfitPct,
+        barColor: 'var(--blue)',
+        deltaPct: null,
+        deltaIsCost: false,
+        kind: 'subtotal',
+      },
+      {
+        key: 'labor',
+        label: 'Labor cost',
+        amount: -laborCostVal,
+        pctOfRevenue: laborCostPct,
+        barPct: laborCostPct,
+        barColor: 'var(--red)',
+        deltaPct: deltaLabor,
+        deltaIsCost: true,
+        kind: 'deduction',
+      },
+      {
+        key: 'prime',
+        label: 'Prime profit',
+        amount: primeProfitVal,
+        pctOfRevenue: primeProfitPct,
+        barPct: primeProfitPct,
+        barColor: 'var(--amber)',
+        deltaPct: null,
+        deltaIsCost: false,
+        kind: 'subtotal',
+      },
+      {
+        key: 'opex',
+        label: 'Operating expenses (est.)',
+        amount: -opExVal,
+        pctOfRevenue: opExPct,
+        barPct: opExPct,
+        barColor: 'var(--text-muted)',
+        deltaPct: null,
+        deltaIsCost: false,
+        kind: 'deduction',
+      },
+      {
+        key: 'ebitda',
         label: 'EBITDA',
-        value: ebitdaVal,
+        amount: ebitdaVal,
         pctOfRevenue: ebitdaPct,
         barPct: Math.min(100, Math.max(0, ebitdaPct)),
-        color: ebitdaPct > 15 ? 'var(--green)' : ebitdaPct >= 10 ? 'var(--amber)' : 'var(--red)',
+        barColor: ebitdaPct > 15 ? 'var(--green)' : ebitdaPct >= 10 ? 'var(--amber)' : 'var(--red)',
         deltaPct: null,
+        deltaIsCost: false,
+        kind: 'ebitda',
       },
-    ];
-    return list;
-  }, [
-    revenue,
-    foodCostVal,
-    laborCostVal,
-    opExVal,
-    grossProfitVal,
-    primeProfitVal,
-    ebitdaVal,
-    foodCostPct,
-    laborCostPct,
-    grossProfitPct,
-    primeProfitPct,
-    opExPct,
-    ebitdaPct,
-    deltaFood,
-    deltaLabor,
-  ]);
+    ],
+    [
+      revenue,
+      foodCostVal,
+      laborCostVal,
+      opExVal,
+      grossProfitVal,
+      primeProfitVal,
+      ebitdaVal,
+      foodCostPct,
+      laborCostPct,
+      grossProfitPct,
+      primeProfitPct,
+      opExPct,
+      ebitdaPct,
+      deltaFood,
+      deltaLabor,
+    ]
+  );
 
   const industryMedian = '12–15%';
   const vsMedian =
-    ebitdaPct > 15 ? 'above' : ebitdaPct >= 12 && ebitdaPct <= 15 ? 'at' : 'below';
+    ebitdaPct > 15 ? 'above' : ebitdaPct >= 12 && ebitdaPct <= 15 ? 'in line with' : 'below';
 
   const [showLogic, setShowLogic] = useState(false);
 
   return (
-    <section className="executive-section card" style={{ padding: 24 }}>
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <h2
-          className="executive-section-title"
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            letterSpacing: '0.04em',
-            color: 'var(--text-secondary)',
-            margin: 0,
-          }}
-        >
-          P&L Snapshot
-          {isEstimated && (
-            <span
-              className="ml-2 rounded px-1.5 py-0.5 text-xs font-medium"
-              style={{ background: 'var(--amber)', color: 'var(--bg-base)' }}
+    <section className="executive-section card overflow-hidden p-0">
+      <div className="border-b border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+                P&amp;L snapshot
+              </h2>
+              {isEstimated && (
+                <span className="rounded-md bg-[var(--amber)]/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--amber)]">
+                  Estimated
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              {PERIOD_LABEL[period]} view · {days}-day revenue roll-up from average daily sales
+              {avgDaily <= 0 && ' · upload CSV to populate revenue'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowLogic(!showLogic)}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+            aria-expanded={showLogic}
+          >
+            <Info className="h-3.5 w-3.5" aria-hidden />
+            {showLogic ? (
+              <>
+                Hide definitions <ChevronUp className="h-3.5 w-3.5" />
+              </>
+            ) : (
+              <>
+                Definitions <ChevronDown className="h-3.5 w-3.5" />
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-[var(--green-border)] bg-[var(--green-dim)] px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Revenue</p>
+            <p className="mt-0.5 text-lg font-semibold tabular-nums text-[var(--text-primary)] sm:text-xl">
+              {formatCurrency(revenue)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">Prime profit</p>
+            <p className="mt-0.5 text-lg font-semibold tabular-nums text-[var(--amber)] sm:text-xl">
+              {formatCurrency(primeProfitVal)}
+            </p>
+            <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">{formatPercent(primeProfitPct)} of revenue</p>
+          </div>
+          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">EBITDA</p>
+            <p
+              className="mt-0.5 text-lg font-semibold tabular-nums sm:text-xl"
+              style={{ color: ebitdaPct > 15 ? 'var(--green)' : ebitdaPct >= 10 ? 'var(--amber)' : 'var(--red)' }}
             >
-              Estimated
-            </span>
-          )}
-        </h2>
-        <button
-          type="button"
-          onClick={() => setShowLogic(!showLogic)}
-          className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-          aria-expanded={showLogic}
-        >
-          <Info className="h-3.5 w-3.5" />
-          {showLogic ? <>Hide logic <ChevronUp className="h-3.5 w-3.5" /></> : <>Logic & definitions <ChevronDown className="h-3.5 w-3.5" /></>}
-        </button>
+              {formatCurrency(ebitdaVal)}
+            </p>
+            <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">{ebitdaPct.toFixed(1)}% margin</p>
+          </div>
+        </div>
       </div>
+
       {showLogic && (
-        <div className="mb-4 p-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
-          <p className="text-xs text-[var(--text-secondary)] leading-[1.6] mb-2">{PL_METHODOLOGY.cascade}</p>
-          <p className="text-xs text-[var(--text-secondary)] leading-[1.6] mb-2">{PL_METHODOLOGY.ebitdaBands}</p>
-          {isEstimated && <p className="text-xs text-[var(--text-muted)]">{PL_METHODOLOGY.estimatedNote}</p>}
+        <div className="border-b border-[var(--border-subtle)] bg-[var(--bg-base)] px-4 py-3 sm:px-5">
+          <p className="text-xs leading-relaxed text-[var(--text-secondary)]">{PL_METHODOLOGY.cascade}</p>
+          <p className="mt-2 text-xs leading-relaxed text-[var(--text-secondary)]">{PL_METHODOLOGY.ebitdaBands}</p>
+          {isEstimated && (
+            <p className="mt-2 text-xs text-[var(--text-muted)]">{PL_METHODOLOGY.estimatedNote}</p>
+          )}
         </div>
       )}
-      <div
-        className="pl-waterfall"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: 8,
-          alignItems: 'flex-end',
-        }}
-      >
-        {columns.map((col, i) => (
-          <div key={col.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            {i > 0 && (
-              <span style={{ color: 'var(--text-muted)', fontSize: 12 }} aria-hidden>→</span>
-            )}
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'center' }}>{col.label}</span>
-            <span
-              style={{
-                fontSize: 24,
-                fontWeight: 700,
-                fontFamily: 'var(--font-outfit), Outfit, sans-serif',
-                color: col.value < 0 ? 'var(--red)' : col.color,
-              }}
-            >
-              {col.value < 0 ? '−' : ''}{formatCurrency(Math.abs(col.value))}
-            </span>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              {col.pctOfRevenue.toFixed(1)}%
-            </span>
-            <div
-              style={{
-                width: '100%',
-                maxWidth: 80,
-                height: 8,
-                borderRadius: 4,
-                background: 'var(--border-subtle)',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  width: `${col.barPct}%`,
-                  height: '100%',
-                  background: col.color,
-                  borderRadius: 4,
-                }}
-              />
-            </div>
-            {col.deltaPct != null && (
-              <span
-                style={{
-                  fontSize: 11,
-                  color: col.deltaPct > 0 ? 'var(--red)' : 'var(--green)',
-                }}
-              >
-                {col.deltaPct > 0 ? '↑' : '↓'} {Math.abs(col.deltaPct).toFixed(1)}%
-              </span>
-            )}
-          </div>
-        ))}
+
+      <div className="overflow-x-auto px-2 pb-4 pt-2 sm:px-4 sm:pb-5 sm:pt-3">
+        <table className="pl-snapshot-table w-full min-w-[520px] border-collapse text-left text-sm">
+          <thead>
+            <tr className="border-b border-[var(--border-default)] text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              <th className="py-3 pl-3 pr-2 sm:pl-4">Line item</th>
+              <th className="py-3 pr-3 text-right tabular-nums">Amount</th>
+              <th className="py-3 pr-3 text-right tabular-nums">% of revenue</th>
+              <th className="hidden py-3 pr-3 text-right sm:table-cell sm:w-[100px]">vs prior</th>
+              <th className="py-3 pr-3 sm:pl-2 sm:pr-4">
+                <span className="sr-only">Share of revenue</span>
+                <span className="hidden sm:inline">Mix</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const isDeduction = row.kind === 'deduction';
+              const isEbitda = row.kind === 'ebitda';
+              const isRevenue = row.kind === 'revenue';
+              const rowBg =
+                isEbitda
+                  ? 'bg-[var(--bg-elevated)]'
+                  : isRevenue
+                  ? 'bg-[var(--green-dim)]/40'
+                  : 'bg-transparent';
+              const borderLeft =
+                isRevenue
+                  ? 'border-l-[3px] border-l-[var(--green)]'
+                  : isDeduction
+                  ? 'border-l-[3px] border-l-[var(--red)]/60'
+                  : isEbitda
+                  ? 'border-l-[3px] border-l-[var(--amber)]'
+                  : 'border-l-[3px] border-l-transparent';
+
+              let deltaContent: ReactNode = '—';
+              if (row.deltaPct != null) {
+                const up = row.deltaPct > 0;
+                const badForCost = row.deltaIsCost && up;
+                const goodForCost = row.deltaIsCost && !up;
+                const tone = row.deltaIsCost ? (badForCost ? 'text-[var(--red)]' : 'text-[var(--green)]') : 'text-[var(--text-muted)]';
+                deltaContent = (
+                  <span className={`inline-flex items-center justify-end gap-0.5 font-medium tabular-nums ${tone}`}>
+                    {up ? <TrendingUp className="h-3.5 w-3.5" aria-hidden /> : <TrendingDown className="h-3.5 w-3.5" aria-hidden />}
+                    {Math.abs(row.deltaPct).toFixed(1)}%
+                  </span>
+                );
+              }
+
+              return (
+                <tr
+                  key={row.key}
+                  className={`border-b border-[var(--border-subtle)] ${rowBg} ${borderLeft} ${isEbitda ? 'font-semibold' : ''}`}
+                >
+                  <td className={`py-3 pl-3 pr-2 sm:pl-4 ${isEbitda ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                    <span className={isDeduction ? 'text-[var(--text-secondary)]' : ''}>{row.label}</span>
+                  </td>
+                  <td
+                    className={`py-3 pr-3 text-right tabular-nums ${
+                      row.amount < 0 ? 'text-[var(--red)]' : isEbitda || isRevenue ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {row.amount < 0 ? '−' : ''}
+                    {formatCurrency(Math.abs(row.amount))}
+                  </td>
+                  <td className="py-3 pr-3 text-right tabular-nums text-[var(--text-muted)]">
+                    {formatPercent(row.pctOfRevenue)}
+                  </td>
+                  <td className="hidden py-3 pr-3 text-right sm:table-cell">{deltaContent}</td>
+                  <td className="py-3 pr-3 sm:pr-4">
+                    <div
+                      className="h-2 w-full max-w-[120px] overflow-hidden rounded-full bg-[var(--border-subtle)] sm:ml-auto"
+                      role="presentation"
+                    >
+                      <div
+                        className="h-full rounded-full transition-[width] duration-300"
+                        style={{
+                          width: `${row.barPct}%`,
+                          backgroundColor: row.barColor,
+                          maxWidth: '100%',
+                        }}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-      <p
-        className="mt-4 text-[13px] leading-[1.7]"
-        style={{ color: 'var(--text-secondary)' }}
-      >
-        EBITDA this {period}: {formatCurrency(ebitdaVal)} ({ebitdaPct.toFixed(1)}% margin) — {vsMedian} industry median of {industryMedian}.
-      </p>
+
+      <div className="border-t border-[var(--border-default)] bg-[var(--bg-base)] px-4 py-3 sm:px-5">
+        <p className="text-xs leading-relaxed text-[var(--text-secondary)] sm:text-[13px]">
+          <strong className="font-medium text-[var(--text-primary)]">EBITDA ({PERIOD_LABEL[period].toLowerCase()}):</strong>{' '}
+          {formatCurrency(ebitdaVal)} ({ebitdaPct.toFixed(1)}% margin) — {vsMedian} a typical full-service median of{' '}
+          {industryMedian}.
+        </p>
+      </div>
     </section>
   );
 }
-

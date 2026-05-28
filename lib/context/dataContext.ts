@@ -1,5 +1,6 @@
 import { useMetricsStore } from '@/lib/store/metricsStore';
 import { getAvgDailyRevenue, getWoWChangePct, getAvgGrossMarginPct } from '@/lib/store/metricsStore';
+import { useIngestionLogStore } from '@/lib/store/ingestionLogStore';
 import { formatCurrency, formatPercent } from '@/lib/utils/formatters';
 
 /**
@@ -19,6 +20,8 @@ export function buildDataContext(): string {
     const lines: string[] = [
       `Current KPIs: food cost ${formatPercent(Number(metrics.food_cost) || 0)}, labor cost ${formatPercent(Number(metrics.labor_cost) || 0)}, prime cost ${formatPercent(Number(metrics.prime_cost) || 0)}, avg check ₹${Number(metrics.avg_check) || 0}, waste ${formatPercent(Number(metrics.waste_pct) || 0)}, satisfaction ${Number(metrics.sat_score) || 0}/5.`,
       `Revenue: last ${daily.length} days; avg daily revenue ${formatCurrency(avgRevenue)}; week-over-week change ${wowPct >= 0 ? '+' : ''}${wowPct.toFixed(1)}%. Gross margin (blended) ${formatPercent(avgMargin)}.`,
+      `Granularity: current uploaded sources are order-level POS and marketplace settlement files. Menu engineering only uses real item-level data when available; otherwise menu datasets remain empty instead of mocked.`,
+      `Commercial coverage: for liquidity, inventory files, franchise splits, per-SKU landed cost, delivery/dispatch fees, and supplier transit times—only state what is present in uploads; do not invent franchise or bank balances.`,
       `Menu: ${menu.length} items across ${categories}.`,
     ];
     if (categoryPL.length > 0) {
@@ -27,6 +30,12 @@ export function buildDataContext(): string {
         .map((c) => `${c.category} (margin ${formatPercent(Number(c.marginPct) || 0)})`)
         .join('; ');
       lines.push(`Category P&L: ${top}.`);
+    }
+    const lastIngest = useIngestionLogStore.getState().events[0];
+    if (lastIngest) {
+      lines.push(
+        `Last CSV ingest: schema ${lastIngest.schema}, ${lastIngest.dailyDays} day(s) in series, ${lastIngest.skippedRowCount} row(s) skipped, ${lastIngest.warnings.length} pipeline warning(s).`
+      );
     }
     return lines.join(' ');
   } catch {

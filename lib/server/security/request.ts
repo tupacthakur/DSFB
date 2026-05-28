@@ -8,10 +8,23 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
+function productionAllowedOrigins(allowedOrigin?: string): string[] {
+  const origins = new Set<string>();
+  if (allowedOrigin) origins.add(allowedOrigin);
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) origins.add(`https://${vercelUrl}`);
+  const branchUrl = process.env.VERCEL_BRANCH_URL;
+  if (branchUrl) origins.add(`https://${branchUrl}`);
+  return Array.from(origins);
+}
+
 export function assertAllowedOrigin(origin: string | null): void {
   const { allowedOrigin, nodeEnv } = getServerEnv();
-  if (!allowedOrigin || nodeEnv !== 'production') return;
-  if (!origin || origin !== allowedOrigin) {
+  if (nodeEnv !== 'production') return;
+  const allowed = productionAllowedOrigins(allowedOrigin);
+  if (allowed.length === 0) return;
+  if (!origin) return;
+  if (!allowed.includes(origin)) {
     throw new ApiError(403, 'ORIGIN_NOT_ALLOWED', 'Request origin is not allowed');
   }
 }

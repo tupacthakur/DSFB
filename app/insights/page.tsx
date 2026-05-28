@@ -36,14 +36,13 @@ function buildChatSummary(): string {
 }
 
 export default function InsightsPage() {
-  const daily = useMetricsStore((s) => s.daily);
   const metrics = useMetricsStore((s) => s.metrics);
   const ingestedSummary = useIngestedContextStore((s) => s.summary);
   const keyConfigured = useSettingsStore((s) => s.keyConfigured);
   const { keySource, anthropicKey } = useSettingsStore();
 
-  const avgMarginPct = useMemo(() => getAvgGrossMarginPct(), [daily]);
-  const wowPct = useMemo(() => getWoWChangePct(), [daily]);
+  const avgMarginPct = useMemo(() => getAvgGrossMarginPct(), []);
+  const wowPct = useMemo(() => getWoWChangePct(), []);
   const foodCostPct = Number(metrics?.food_cost) ?? 30;
 
   const kpiInsights = useMemo(
@@ -122,6 +121,9 @@ export default function InsightsPage() {
               <Link href="/executive" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">
                 Executive
               </Link>
+              <Link href="/decisions" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">
+                Decisions
+              </Link>
               <Link href="/chat" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">
                 SAGE Chat
               </Link>
@@ -134,6 +136,12 @@ export default function InsightsPage() {
         </header>
 
         <main className="mx-auto max-w-4xl px-3 py-6 sm:px-4">
+          <section className="info-banner mb-5">
+            <p className="text-sm font-medium text-[var(--text-primary)]">Insight feed</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              KPI insights are deterministic from your metrics. SAGE insights combine KPI state, uploaded data context, and recent chat.
+            </p>
+          </section>
           <h1 className="mb-2 text-xl font-semibold text-[var(--text-primary)]">Insights</h1>
           <p className="mb-6 text-sm text-[var(--text-muted)]">
             KPI-based insights and SAGE-generated insights from your current data and chat context.
@@ -152,10 +160,7 @@ export default function InsightsPage() {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {(kpiInsights as KpiInsight[]).map((insight) => (
-                  <div
-                    key={insight.id}
-                    className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-4"
-                  >
+                  <div key={insight.id} className="surface-card tap-feedback p-4">
                     <h3 className="text-sm font-medium text-[var(--text-primary)]">{insight.title}</h3>
                     <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">{insight.summary}</p>
                     <Link
@@ -218,10 +223,7 @@ export default function InsightsPage() {
                 </button>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {sageInsights.map((insight, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-4"
-                    >
+                    <div key={idx} className="surface-card tap-feedback p-4">
                       <h3 className="text-sm font-medium text-[var(--text-primary)]">{insight.title}</h3>
                       <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">{insight.summary}</p>
                       <Link

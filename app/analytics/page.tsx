@@ -66,6 +66,7 @@ function AnalyticsContent() {
         <nav className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
           <Link href="/" className="rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Home</Link>
           <Link href="/executive" className="rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Executive</Link>
+          <Link href="/decisions" className="rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Decisions</Link>
           <Link href="/insights" className="rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Insights</Link>
           <Link href="/chat" className="rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">SAGE Chat</Link>
           <Link href="/settings" className="rounded-lg px-2 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Settings</Link>
@@ -110,6 +111,12 @@ function AnalyticsContent() {
         aria-labelledby={`tab-${activeTab}`}
         className="p-4 md:p-6"
       >
+        <div className="info-banner mb-4">
+          <p className="text-sm font-medium text-[var(--text-primary)]">Analytics workspace</p>
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">
+            Performance shows KPI health, Forecasting projects next periods, and Data Intelligence validates ingestion quality.
+          </p>
+        </div>
         <ErrorBoundary level="section">
           <Suspense fallback={<AnalyticsTabSkeleton />}>
             <ActiveContent />

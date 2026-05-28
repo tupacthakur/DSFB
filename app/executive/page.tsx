@@ -13,6 +13,11 @@ const StrategicIntelligenceLazy = lazy(() => import('@/components/executive/Stra
 const PeriodComparisonTableLazy = lazy(() => import('@/components/executive/PeriodComparisonTable').then((m) => ({ default: m.PeriodComparisonTable })));
 const ExecutiveBriefingLazy = lazy(() => import('@/components/executive/ExecutiveBriefing').then((m) => ({ default: m.ExecutiveBriefing })));
 const StrategicOutlookLazy = lazy(() => import('@/components/executive/StrategicOutlook').then((m) => ({ default: m.StrategicOutlook })));
+const ActionCenterLazy = lazy(() => import('@/components/executive/ActionCenter').then((m) => ({ default: m.ActionCenter })));
+const ExecutiveCoverageFrameworkLazy = lazy(() =>
+  import('@/components/executive/ExecutiveCoverageFramework').then((m) => ({ default: m.ExecutiveCoverageFramework }))
+);
+const CommandCentreLazy = lazy(() => import('@/components/executive/CommandCentre').then((m) => ({ default: m.CommandCentre })));
 
 function ExecutiveSectionSkeleton() {
   return (
@@ -74,6 +79,9 @@ export default function ExecutivePage() {
               <Link href="/executive" className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-[var(--green)] bg-[var(--green)]/10 sm:min-h-0 sm:min-w-0">
                 Executive
               </Link>
+              <Link href="/decisions" className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)] sm:min-h-0 sm:min-w-0">
+                Decisions
+              </Link>
               <Link href="/chat" className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)] sm:min-h-0 sm:min-w-0">
                 SAGE Chat
               </Link>
@@ -86,6 +94,14 @@ export default function ExecutivePage() {
         </header>
 
         <main className="executive-page mx-auto max-w-5xl px-3 py-6 sm:px-4 pt-6 pb-12">
+          <section className="info-banner mb-5 no-print">
+            <p className="text-sm font-medium text-[var(--text-primary)]">Executive decision cockpit</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              Board-level clarity: liquidity (payouts, cash flow, demand), inventory and sales interpretation (franchise,
+              SKU cost, margins, transit), bottom-line profit by timeframe, plus a checklist and phased timeline in the
+              SAGE briefing.
+            </p>
+          </section>
           <div className="executive-print-header text-xs text-[var(--text-muted)] border-b border-[var(--border-default)] pb-2 mb-6">
             Koravo Executive Report — {restaurantName} — {new Date().toLocaleDateString()}
           </div>
@@ -139,12 +155,27 @@ export default function ExecutivePage() {
             </Suspense>
             <Suspense fallback={<ExecutiveSectionSkeleton />}>
               <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]">
+                <CommandCentreLazy />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExecutiveSectionSkeleton />}>
+              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]">
                 <StrategicIntelligenceLazy />
               </div>
             </Suspense>
             <Suspense fallback={<ExecutiveSectionSkeleton />}>
               <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]">
+                <ActionCenterLazy />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExecutiveSectionSkeleton />}>
+              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]">
                 <PeriodComparisonTableLazy period={period} />
+              </div>
+            </Suspense>
+            <Suspense fallback={<ExecutiveSectionSkeleton />}>
+              <div className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]">
+                <ExecutiveCoverageFrameworkLazy />
               </div>
             </Suspense>
             <Suspense fallback={<ExecutiveSectionSkeleton />}>

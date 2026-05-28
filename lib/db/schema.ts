@@ -1,103 +1,97 @@
 /**
- * Database schema aligned to datapoints: Sales, Financial, Inventory,
- * and symbolic layer (DiscountCap, MarginFloor, WasteTolerance, PaymentRisk, VendorClass, ShrinkageMetric).
- * Grain: transaction-level for master fact; aggregates for rules.
+ * Source-aligned schema contracts for Koravo.
+ * These interfaces mirror the real data currently available:
+ * 1) Rista POS sales-audit exports
+ * 2) Swiggy settlement / annexure exports
+ * The grain is order-level, not SKU-level, so downstream analytics should
+ * derive KPIs from orders, channels, branches, coupons, payments, and fees.
  */
 
-// ─── Sales (from sales_transactions) ───────────────────────────────────────
-export interface SalesRow {
-  order_id: string;
+export interface RistaSalesAuditRow {
+  branch_name: string;
+  branch_code: string;
+  business_brand: string;
+  business_date: string;
+  invoice_number: string;
+  invoice_date: string;
+  sale_status: string;
+  order_source: string;
+  gross_amount: number;
+  discounts: number;
+  net_amount: number;
+  taxes: number;
+  total: number;
+  paid_amount: number;
+  balance_due: number;
+  discount_pct: number;
+  payment_modes: string;
+  materials_cost: number;
+  supplies_cost: number;
+  channel: string;
+  channel_label: string;
+  session: string | null;
+  number_of_items: number;
+  total_quantity: number;
+  number_of_people: number;
+  number_of_tickets: number;
+  number_of_cancelled_tickets: number;
+  created_date: string;
+  sale_by: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+}
+
+export interface SwiggyAnnexureRow {
+  rid: string;
   order_date: string;
-  order_time: string;
-  order_hour: number;
-  sku_id: string;
-  sku_name: string;
-  category: string;
-  channel: string;
-  region: string;
-  distributor_id: string;
-  qty_ordered: number;
-  qty_delivered: number;
-  fulfillment_rate_pct: number;
-  is_partial_delivery: boolean;
-  unit_cost: number;
-  selling_price_per_unit: number;
-  discount_pct: number;
-  total_revenue: number;
-  gross_margin: number;
-  payment_status: string;
-  days_to_payment: number;
-  transaction_type: string;
-  return_reason: string | null;
-  original_order_id: string | null;
+  order_no: string;
+  order_status: string;
+  order_category: string;
+  item_total_a: number;
+  packing_service_charges_b: number;
+  merchant_discount_c: number;
+  net_bill_value_d: number;
+  gst_liability_e: number;
+  customer_payable_f: number;
+  platform_fee_pct: number;
+  platform_fee_g: number;
+  total_swiggy_service_fee_q: number;
+  delivery_fee_u1: number;
+  taxes_on_swiggy_fee_r: number;
+  total_swiggy_fee_s: number;
+  total_adjustments_v: number;
+  net_payable_before_tax_w: number;
+  tcs_x1: number;
+  tds_x2: number;
+  net_payable_after_tax_y: number;
+  coupon_code_applied_by_customer: string | null;
+  current_utr: string | null;
+  last_mile_distance: number | null;
+  parent_order_id: string | null;
 }
 
-// ─── Financial (from financial_tracking) ────────────────────────────────────
-export interface FinancialRow {
-  transaction_id: string;
-  date: string;
-  sku_id: string;
-  sku_name: string;
-  category: string;
-  transaction_type: string;
-  channel: string;
-  region: string;
-  quantity: number;
-  unit_cost: number;
-  selling_price: number;
-  total_value: number;
-  gross_margin: number;
-  discount_pct: number;
-  payment_status: string;
-  days_to_payment: number;
-  reference_id: string | null;
-  damage_reason: string | null;
-}
-
-// ─── Inventory ─────────────────────────────────────────────────────────────
-export interface InventoryRow {
-  sku_id: string;
-  sku_name: string;
-  category: string;
-  batch_no: string;
-  supplier_id: string;
-  supplier_name: string;
-  warehouse_id: string;
-  manufactured_date: string;
-  expiry_date: string;
-  shelf_life_days: number;
-  shelf_life_remaining_pct: number;
-  quantity_in_stock: number;
-  unit: string;
-  cost_per_unit: number;
-  reorder_level: number;
-  reorder_quantity: number;
-  stock_status: string;
-  is_damaged: boolean;
-  damaged_qty: number;
-  damage_reason: string | null;
-  financial_loss_damage: number;
-  inventory_turnover_rate: number;
-  last_updated: string;
-}
-
-// ─── Master fact table (transaction grain) ─────────────────────────────────
-export interface MasterFactRow {
-  order_id: string;
+export interface UnifiedOrderFact {
+  source_system: 'rista' | 'swiggy';
+  source_order_id: string;
   order_date: string;
-  sku_id: string;
-  distributor_id: string;
-  region: string;
+  branch_name: string | null;
+  branch_code: string | null;
   channel: string;
-  qty_ordered: number;
-  selling_price: number;
-  discount_pct: number;
-  gross_margin: number;
-  days_to_payment: number;
-  supplier_id?: string;
-  warehouse_id?: string;
-  transaction_value: number;
-  overdue_flag: boolean;
+  order_status: string;
+  payment_mode: string | null;
+  customer_id: string | null;
+  customer_phone: string | null;
+  gross_amount: number;
+  discount_amount: number;
+  tax_amount: number;
+  net_sales_amount: number;
+  fee_amount: number;
+  cost_amount: number;
+  final_payout_amount: number;
+  order_count: number;
+  unit_count: number;
+  guest_count: number;
 }
 
 // ─── Symbolic layer / Rule outputs (from impl_draft) ────────────────────────
@@ -111,11 +105,11 @@ export type ConstraintId =
 
 export interface DiscountCapAggregate {
   channel: string;
-  category: string;
-  region: string;
+  category: string | null;
+  region: string | null;
   week: string;
   weekly_avg_discount: number;
-  discount_breach: boolean; // discount_pct > policy_cap
+  discount_breach: boolean;
 }
 
 export interface MarginFloorContext {

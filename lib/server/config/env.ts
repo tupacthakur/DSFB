@@ -17,6 +17,8 @@ export interface ServerEnv {
   nodeEnv: EnvMode;
   appName: string;
   anthropicApiKey?: string;
+  ristaApiKey?: string;
+  ristaSecretKey?: string;
   dbUrl?: string;
   apiRateLimitMax: number;
   apiRateLimitWindowMs: number;
@@ -29,6 +31,8 @@ export function getServerEnv(): ServerEnv {
     nodeEnv,
     appName: read('NEXT_PUBLIC_APP_NAME') ?? 'Koravo',
     anthropicApiKey: read('ANTHROPIC_API_KEY'),
+    ristaApiKey: read('RISTA_API_KEY'),
+    ristaSecretKey: read('RISTA_SECRET_KEY'),
     dbUrl: read('DATABASE_URL'),
     apiRateLimitMax: parseNumber(read('API_RATE_LIMIT_MAX'), 60),
     apiRateLimitWindowMs: parseNumber(read('API_RATE_LIMIT_WINDOW_MS'), 60_000),

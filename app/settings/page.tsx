@@ -29,6 +29,7 @@ export default function SettingsPage() {
               <Link href="/" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Home</Link>
               <Link href="/analytics" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Analytics</Link>
               <Link href="/executive" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Executive</Link>
+              <Link href="/decisions" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Decisions</Link>
               <Link href="/insights" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">Insights</Link>
               <Link href="/chat" className="rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--green)]">SAGE Chat</Link>
               <Link href="/settings" className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--green)]">Settings</Link>
@@ -37,6 +38,12 @@ export default function SettingsPage() {
           </div>
         </header>
         <div className="mx-auto max-w-3xl px-3 py-4 sm:p-6">
+          <section className="info-banner mb-5">
+            <p className="text-sm font-medium text-[var(--text-primary)]">Configuration center</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              Keep credentials and endpoints current. Production should use platform environment variables for secrets.
+            </p>
+          </section>
           <h1 className="mb-4 text-lg font-semibold text-[var(--text-primary)] sm:mb-6">Settings</h1>
           <section className="mb-8">
             <h2 className="mb-3 text-sm font-medium text-[var(--text-secondary)]">Appearance</h2>
