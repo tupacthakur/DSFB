@@ -33,6 +33,7 @@ export interface RistaSyncPayload {
   branches: { branchCode: string; branchName: string }[];
   salesCount: number;
   daysSynced: number;
+  source?: 'analytics' | 'sales_page' | 'metadata_fallback';
 }
 
 function ristaBodyFromSettings(): { apiKey?: string; secretKey?: string } {

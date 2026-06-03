@@ -1,6 +1,5 @@
 /**
  * Extensive Rista API live test. Run: npm run rista:test
- * Requires RISTA_API_KEY and RISTA_SECRET_KEY in .env.local or environment.
  */
 import { readFileSync, existsSync } from 'fs';
 import { createHmac } from 'crypto';
@@ -65,38 +64,56 @@ async function run() {
   if (branches.status === 200 && Array.isArray(branches.body)) {
     results.pass++;
     log('✓', 'branch/list', `${branches.body.length} active outlets`);
-    for (const b of branches.body.slice(0, 5)) {
-      console.log(`    · ${b.branchName} (${b.branchCode}) — ${b.status}`);
-    }
   } else {
     results.fail++;
     log('✗', 'branch/list', `HTTP ${branches.status}`);
   }
 
-  const code = branches.body?.[0]?.branchCode ?? 'LKW';
+  const code = branches.body?.[0]?.branchCode ?? 'KVL';
   const day = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+  const analytics = await ristaGet(
+    `/analytics/sales/summary?branch=${encodeURIComponent(code)}&period=${day}`
+  );
+  if (analytics.status === 200) {
+    results.pass++;
+    const ch = analytics.body?.channelSummary?.map((c) => c.name).join(', ') ?? '—';
+    log('✓', 'analytics/sales/summary', `channels: ${ch}`);
+  } else if (analytics.status === 403) {
+    results.warn++;
+    log('!', 'analytics/sales/summary', '403 forbidden');
+  } else {
+    results.fail++;
+    log('✗', 'analytics/sales/summary', `HTTP ${analytics.status}`);
+  }
 
   const salesPage = await ristaGet(`/sales/page?branchCode=${encodeURIComponent(code)}&day=${day}`);
   if (salesPage.status === 200) {
     results.pass++;
-    const count = Array.isArray(salesPage.body?.data) ? salesPage.body.data.length : 0;
-    log('✓', 'sales/page', `${count} sale(s) on ${day} for ${code}`);
+    log('✓', 'sales/page', 'accessible');
   } else if (salesPage.status === 403) {
     results.warn++;
-    log('!', 'sales/page', '403 — Sales Enterprise + API licence required on this key');
+    log('!', 'sales/page', '403 — use analytics endpoint instead');
   } else {
     results.fail++;
     log('✗', 'sales/page', `HTTP ${salesPage.status}`);
   }
 
-  const localStatus = await fetch('http://localhost:3000/api/rista/status').catch(() => null);
-  if (localStatus?.ok) {
-    const j = await localStatus.json();
-    results.pass++;
-    log('✓', 'Koravo /api/rista/status', `${j.branchCount} branches, salesLicensed=${j.salesApiLicensed}`);
-  } else {
+  try {
+    const localStatus = await fetch('https://dsfb-sepia.vercel.app/api/rista/status', {
+      headers: { Origin: 'https://dsfb-sepia.vercel.app' },
+    });
+    if (localStatus.ok) {
+      const j = await localStatus.json();
+      results.pass++;
+      log('✓', 'Koravo /api/rista/status', `${j.branchCount} branches, salesLicensed=${j.salesApiLicensed}`);
+    } else {
+      results.warn++;
+      log('!', 'Koravo /api/rista/status', `HTTP ${localStatus.status}`);
+    }
+  } catch {
     results.warn++;
-    log('!', 'Koravo /api/rista/status', 'Dev server not running — start with npm run dev');
+    log('!', 'Koravo /api/rista/status', 'unreachable');
   }
 
   console.log(`\nSummary: ${results.pass} passed, ${results.warn} warnings, ${results.fail} failed\n`);

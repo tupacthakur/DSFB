@@ -22,6 +22,7 @@ export function buildDataContext(): string {
       `Revenue: last ${daily.length} days; avg daily revenue ${formatCurrency(avgRevenue)}; week-over-week change ${wowPct >= 0 ? '+' : ''}${wowPct.toFixed(1)}%. Gross margin (blended) ${formatPercent(avgMargin)}.`,
       `Granularity: current uploaded sources are order-level POS and marketplace settlement files. Menu engineering only uses real item-level data when available; otherwise menu datasets remain empty instead of mocked.`,
       `Commercial coverage: for liquidity, inventory files, franchise splits, per-SKU landed cost, delivery/dispatch fees, and supplier transit times—only state what is present in uploads; do not invent franchise or bank balances.`,
+      `Blind-spot policy: if paper challan, outlet operations (POS accept/reconcile/close), retail+aggregator channel mix, Zoho↔Rista PO/GRN joins, Tally invoice trail, or franchise settlement flow are not present in ingested data, explicitly mark them as missing controls and elevated reconciliation risk.`,
       `Menu: ${menu.length} items across ${categories}.`,
     ];
     if (categoryPL.length > 0) {
@@ -37,6 +38,9 @@ export function buildDataContext(): string {
         `Last CSV ingest: schema ${lastIngest.schema}, ${lastIngest.dailyDays} day(s) in series, ${lastIngest.skippedRowCount} row(s) skipped, ${lastIngest.warnings.length} pipeline warning(s).`
       );
     }
+    lines.push(
+      `Constraint: never claim end-to-end financial truth unless retail + aggregator sales, inventory movement, and accounting records are all digitally linked by shared document keys.`
+    );
     return lines.join(' ');
   } catch {
     return 'Current data context unavailable.';

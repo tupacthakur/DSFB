@@ -17,53 +17,52 @@ export function ExecutiveCoverageFramework() {
           margin: 0,
         }}
       >
-        Commercial intelligence coverage
+        Commercial intelligence coverage and blind-spot controls
       </h2>
       <p className="mt-2 text-xs text-[var(--text-muted)] leading-relaxed">
-        The SAGE executive briefing below is prompted to address each block: liquidity, inventory, sales interpretation,
-        bottom-line outcomes, an operator checklist, and a phased timeline—using uploaded data where present and clearly
-        calling out gaps.
+        This framework forces SAGE and executive views to explicitly mark blind spots (non-digital steps, missing
+        channels, and disconnected systems) so finance/ops disputes are visible rather than hidden.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Liquidity management
+            Retail and aggregator completeness
           </h3>
           <ul className="mt-2 space-y-1 text-xs text-[var(--text-secondary)] leading-snug list-disc pl-4">
-            <li>Payouts (aggregators, vendors, payroll cadence)</li>
-            <li>Cash flow vs sales and cost timing</li>
-            <li>Demand-driven working capital risk</li>
+            <li>Must include dine-in, takeaway, Zomato, Swiggy, and B2B</li>
+            <li>Flag when B2B is tiny vs total but process docs over-focus on it</li>
+            <li>Show channel mix coverage before drawing revenue conclusions</li>
           </ul>
         </div>
         <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Inventory analytics
+            Outlet operations layer
           </h3>
           <ul className="mt-2 space-y-1 text-xs text-[var(--text-secondary)] leading-snug list-disc pl-4">
-            <li>Cover, spoilage, and ordering vs demand</li>
-            <li>Links to food cost and waste signals</li>
-            <li>Stockout / overstock risk framing</li>
+            <li>POS billing, aggregator acceptance, cash reconciliation, EOD close</li>
+            <li>Mark missing controls if store-floor process is undocumented</li>
+            <li>No &quot;operational excellence&quot; claim without this evidence</li>
           </ul>
         </div>
         <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Sales data interpretation
+            Paper challan and production handoff
           </h3>
           <ul className="mt-2 space-y-1 text-xs text-[var(--text-secondary)] leading-snug list-disc pl-4">
-            <li>Franchise or unit rollup (or consolidated single site)</li>
-            <li>Cost per SKU vs price and category margins</li>
-            <li>Transit, lead time, and channel mix where inferrable</li>
+            <li>Step with zero digital trace is a verifiability black hole</li>
+            <li>Require timestamp, quantity, sender/receiver identity, and SKU lines</li>
+            <li>Escalate dispute risk when challan remains paper-only</li>
           </ul>
         </div>
         <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-base)] p-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-            Bottom line · dispatch · franchise · timeframe
+            System joins: Zoho, Rista, Tally
           </h3>
           <ul className="mt-2 space-y-1 text-xs text-[var(--text-secondary)] leading-snug list-disc pl-4">
-            <li>Expected profit or margin proxy for the selected period</li>
-            <li>Dispatch / delivery fee drag if data supports it</li>
-            <li>Franchise vs corporate reporting note</li>
-            <li>Explicit timeframe and expected output (₹ or %)</li>
+            <li>PO ↔ GRN ↔ PI/Invoice must share a reconcilable key</li>
+            <li>Tally cannot be absent if it is financial source-of-truth</li>
+            <li>Any missing join key must be surfaced as manual-recon risk</li>
+            <li>Franchise settlements, royalty, and compliance need explicit flow</li>
           </ul>
         </div>
       </div>

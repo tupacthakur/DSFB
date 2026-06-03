@@ -1,6 +1,11 @@
 import { format, subDays } from 'date-fns';
 import type { RistaCredentials } from '@/lib/server/services/rista/auth';
-import { fetchSalesPage, listRistaBranches, type RistaBranch } from '@/lib/server/services/rista/client';
+import {
+  fetchAnalyticsSalesSummary,
+  fetchSalesPage,
+  listRistaBranches,
+  type RistaBranch,
+} from '@/lib/server/services/rista/client';
 import { ApiError } from '@/lib/server/api/errors';
 
 export interface RistaLiveStatus {
@@ -39,14 +44,24 @@ export async function getRistaLiveStatus(creds: RistaCredentials): Promise<Rista
   let salesProbeMessage: string | undefined;
 
   try {
-    await fetchSalesPage(creds, probeBranch, probeDay);
-    salesApiLicensed = true;
-    salesProbeMessage = 'Sales API accessible.';
+    const analytics = await fetchAnalyticsSalesSummary(creds, probeBranch, probeDay);
+    if (analytics) {
+      salesApiLicensed = true;
+      const channels = (analytics.channelSummary ?? []).map((c) => c.name).filter(Boolean);
+      salesProbeMessage =
+        channels.length > 0
+          ? `Analytics sales summary accessible (channels: ${channels.join(', ')}).`
+          : 'Analytics sales summary accessible.';
+    } else {
+      await fetchSalesPage(creds, probeBranch, probeDay);
+      salesApiLicensed = true;
+      salesProbeMessage = 'Sales page API accessible.';
+    }
   } catch (err) {
     if (err instanceof ApiError && err.code === 'RISTA_FORBIDDEN') {
       salesApiLicensed = false;
       salesProbeMessage =
-        'Sales endpoints denied for this API key. Enable Sales Enterprise + API licence in Rista Admin → Access Menu.';
+        'Sales/analytics endpoints denied for this API key. Enable Sales Enterprise + API licence in Rista Admin → Access Menu.';
     } else if (err instanceof ApiError) {
       salesApiLicensed = true;
       salesProbeMessage = `Sales API reachable (${err.code}).`;

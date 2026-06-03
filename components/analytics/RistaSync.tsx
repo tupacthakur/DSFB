@@ -21,7 +21,7 @@ export function RistaSync() {
 
   const [live, setLive] = useState<RistaLiveStatus | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
-  const [days, setDays] = useState<number>(30);
+  const [days, setDays] = useState<number>(14);
   const [status, setStatus] = useState<'idle' | 'syncing' | 'ok' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
 
@@ -76,19 +76,20 @@ export function RistaSync() {
       setStatus('error');
       return;
     }
-    if (live && !live.salesApiLicensed) {
-      setMessage(live.salesProbeMessage ?? 'Sales API not licensed for this key.');
-      setStatus('error');
-      return;
-    }
     setStatus('syncing');
     setMessage(null);
     try {
       const result = await syncRistaFromApi(days);
       applySyncResult(result);
       setStatus('ok');
+      const sourceLabel =
+        (result as { source?: string }).source === 'analytics'
+          ? 'Rista analytics (channel-level)'
+          : (result as { source?: string }).source === 'sales_page'
+            ? 'Rista sales page'
+            : 'metadata fallback';
       setMessage(
-        `Live sync complete: ${result.salesCount} sales · ${result.branches.length} branches · ${days} days.`
+        `Sync complete via ${sourceLabel}: ${result.salesCount} record(s) · ${result.branches.length} branches · ${days} days · ${result.daily.length} day(s) in dashboard.`
       );
       await refreshLive();
     } catch (err) {

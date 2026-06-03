@@ -36,6 +36,27 @@ export interface DecisionPipelineReportInput {
   wowPct: number;
 }
 
+function blindSpotAuditLines(input: DecisionPipelineReportInput): string[] {
+  const warningsText = input.ingestions.flatMap((e) => e.warnings).join(' ').toLowerCase();
+  const hasRista = input.ingestions.some((e) => e.schema.includes('rista'));
+  const hasSwiggy = input.ingestions.some((e) => e.schema.includes('swiggy'));
+  const hasInventory = input.ingestions.some((e) => e.schema.includes('inventory'));
+
+  const lines: string[] = [];
+  if (!hasRista && !hasSwiggy) {
+    lines.push('Retail + aggregator flows are missing from ingested evidence; channel conclusions are partial.');
+  }
+  if (!hasInventory) {
+    lines.push('Inventory movement and production handoff are not digitized in the evidence set.');
+  }
+  if (!/challan|grn|po|invoice|tally/.test(warningsText)) {
+    lines.push('PO/GRN/invoice linkage and Tally reconciliation trace are not explicitly evidenced.');
+  }
+  lines.push('Paper challan steps should be treated as non-verifiable until digitally logged with quantity/time signatures.');
+  lines.push('Franchise royalty/settlement/compliance flow must be modeled separately from corporate-owned outlets.');
+  return lines;
+}
+
 export function generateDecisionPipelineReportPdf(input: DecisionPipelineReportInput): void {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   let y = MARGIN;
@@ -108,6 +129,27 @@ export function generateDecisionPipelineReportPdf(input: DecisionPipelineReportI
   });
   y = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y;
   y += 14;
+
+  // —— Blind-spot audit ——
+  if (y > PAGE_H - 70) {
+    doc.addPage();
+    y = MARGIN;
+  }
+  doc.setFontSize(12);
+  doc.setFont(FONT, 'bold');
+  doc.text('Blind-spot audit (control gaps)', MARGIN, y);
+  y += 8;
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(9);
+  const blindSpots = blindSpotAuditLines(input);
+  blindSpots.forEach((line) => {
+    const wrapped = doc.splitTextToSize(`• ${line}`, PAGE_W - 2 * MARGIN - 4);
+    wrapped.forEach((w: string) => {
+      doc.text(w, MARGIN + 2, y);
+      y += 5;
+    });
+  });
+  y += 8;
 
   // —— Ingestion log ——
   if (input.ingestions.length > 0) {

@@ -30,6 +30,30 @@ export interface RistaSalesPage {
   lastKey?: string;
 }
 
+export interface RistaChannelSummary {
+  name?: string;
+  netSaleAmount?: number;
+  noOfSales?: number;
+  paxCount?: number;
+  directCharge?: number;
+  indirectCharge?: number;
+  discount?: number;
+  taxAmount?: number;
+}
+
+export interface RistaAnalyticsSummary {
+  branchName?: string;
+  branchCode?: string;
+  period?: string;
+  grossAmount?: number;
+  netAmount?: number;
+  revenue?: number;
+  noOfSales?: number;
+  noOfPeople?: number;
+  channelSummary?: RistaChannelSummary[];
+  costs?: { name?: string; amount?: number }[];
+}
+
 async function ristaRequest<T>(
   creds: RistaCredentials,
   path: string,
@@ -89,6 +113,25 @@ export async function fetchSalesPage(
   const params = new URLSearchParams({ branchCode, day });
   if (lastKey) params.set('lastKey', lastKey);
   return ristaRequest<RistaSalesPage>(creds, `/sales/page?${params.toString()}`);
+}
+
+/** Daily sales summary by branch — matches Power BI / Jupyter pipeline (`branch` + `period`). */
+export async function fetchAnalyticsSalesSummary(
+  creds: RistaCredentials,
+  branchCode: string,
+  period: string
+): Promise<RistaAnalyticsSummary | null> {
+  const params = new URLSearchParams({ branch: branchCode, period });
+  try {
+    const data = await ristaRequest<RistaAnalyticsSummary>(
+      creds,
+      `/analytics/sales/summary?${params.toString()}`
+    );
+    return { ...data, branchCode, period };
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
 }
 
 export async function fetchAllSalesForDay(
