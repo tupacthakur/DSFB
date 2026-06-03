@@ -1,5 +1,7 @@
 import { buildFromDaily } from '@/lib/metrics/buildFromDaily';
 import type { CsvSchemaId } from '@/lib/parsers/csvToMetrics';
+import { ristaAnalyticsToMenuEngineering } from '@/lib/parsers/ristaAnalyticsToMenuEngineering';
+import type { MenuEngineeringFromRista } from '@/lib/parsers/ristaAnalyticsToMenuEngineering';
 import type { RistaAnalyticsSummary } from '@/lib/server/services/rista/client';
 import type { DailyMetric } from '@/lib/store/metricsStore';
 import { safeDivide } from '@/lib/utils/math';
@@ -97,10 +99,29 @@ export function ristaAnalyticsToMetrics(summaries: RistaAnalyticsSummary[]) {
     );
   }
 
+  const foodCostPct = Number(metrics.food_cost) || 34;
+  const storeMarginPct = safeDivide(
+    daily.reduce((s, d) => s + d.revenue, 0) - daily.reduce((s, d) => s + d.cost, 0),
+    daily.reduce((s, d) => s + d.revenue, 0),
+    0
+  ) * 100;
+  const menu = ristaAnalyticsToMenuEngineering(summaries, {
+    foodCostPct,
+    storeMarginPct: storeMarginPct || Math.max(0, 100 - foodCostPct),
+  });
+
+  if (menu.itemCount > 0) {
+    const dessertCount = menu.menuItemsForEngineering.filter((i) => i.category === 'Desserts').length;
+    warnings.push(
+      `Menu engineering: ${menu.itemCount} SKU(s) from live sales (${dessertCount} desserts).`
+    );
+  }
+
   return {
     daily,
     metrics,
     priorMetrics,
+    menu,
     metadata: {
       schema: 'rista_sales_audit' as CsvSchemaId,
       rowCount: summaries.length,
@@ -114,3 +135,5 @@ export function ristaAnalyticsToMetrics(summaries: RistaAnalyticsSummary[]) {
     },
   };
 }
+
+export type { MenuEngineeringFromRista };

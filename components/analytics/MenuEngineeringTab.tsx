@@ -744,7 +744,7 @@ export default function MenuEngineeringTab() {
   const menuItemsForEngineering = useMetricsStore((s) => s.menuItemsForEngineering);
   const categoryPL = useMetricsStore((s) => s.categoryPL);
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['All']);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['Desserts']);
   const [period, setPeriod] = useState<PeriodKey>('This Month');
   const [sortBy, setSortBy] = useState<SortKey>('Revenue ↓');
   const [detailItem, setDetailItem] = useState<MenuItemForEngineering | null>(null);

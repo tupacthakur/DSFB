@@ -41,6 +41,21 @@ export interface RistaChannelSummary {
   taxAmount?: number;
 }
 
+export interface RistaAnalyticsItemRow {
+  skuCode?: string;
+  itemName?: string;
+  categoryName?: string;
+  itemTotalNetAmount?: number;
+  itemTotalQty?: number;
+  itemTotalDiscountAmount?: number;
+  itemTotalgrossAmount?: number;
+}
+
+export interface RistaAnalyticsCategoryRow {
+  name?: string;
+  amount?: number;
+}
+
 export interface RistaAnalyticsSummary {
   branchName?: string;
   branchCode?: string;
@@ -52,6 +67,8 @@ export interface RistaAnalyticsSummary {
   noOfPeople?: number;
   channelSummary?: RistaChannelSummary[];
   costs?: { name?: string; amount?: number }[];
+  items?: RistaAnalyticsItemRow[];
+  categories?: RistaAnalyticsCategoryRow[];
 }
 
 async function ristaRequest<T>(

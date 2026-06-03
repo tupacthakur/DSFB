@@ -66,6 +66,7 @@ export interface RistaSyncResult {
   metrics: ReturnType<typeof ristaAnalyticsToMetrics>['metrics'];
   priorMetrics: ReturnType<typeof ristaAnalyticsToMetrics>['priorMetrics'];
   metadata: ReturnType<typeof ristaAnalyticsToMetrics>['metadata'];
+  menu?: ReturnType<typeof ristaAnalyticsToMetrics>['menu'];
   branches: { branchCode: string; branchName: string }[];
   salesCount: number;
   daysSynced: number;

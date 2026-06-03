@@ -1,4 +1,5 @@
 import { useSettingsStore } from '@/lib/store/settingsStore';
+import type { MenuEngineeringSnapshot } from '@/lib/store/metricsStore';
 
 export interface RistaValidateResult {
   valid: boolean;
@@ -17,10 +18,15 @@ export interface RistaLiveStatus {
   salesProbeMessage?: string;
 }
 
+export interface RistaSyncMenuPayload extends MenuEngineeringSnapshot {
+  itemCount: number;
+}
+
 export interface RistaSyncPayload {
   daily: { date: string; revenue: number; cost: number; covers: number; grossMarginPct: number }[];
   metrics: Record<string, number>;
   priorMetrics: Record<string, number>;
+  menu?: RistaSyncMenuPayload;
   metadata: {
     schema: string;
     rowCount: number;

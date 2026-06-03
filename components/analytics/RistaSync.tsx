@@ -17,6 +17,7 @@ export function RistaSync() {
   const setDaily = useMetricsStore((s) => s.setDaily);
   const setMetrics = useMetricsStore((s) => s.setMetrics);
   const setPriorMetrics = useMetricsStore((s) => s.setPriorMetrics);
+  const setMenuEngineering = useMetricsStore((s) => s.setMenuEngineering);
   const pushIngestion = useIngestionLogStore((s) => s.pushIngestion);
 
   const [live, setLive] = useState<RistaLiveStatus | null>(null);
@@ -49,6 +50,15 @@ export function RistaSync() {
       setDaily(result.daily);
       setMetrics(result.metrics);
       setPriorMetrics(result.priorMetrics);
+      if (result.menu && result.menu.itemCount > 0) {
+        setMenuEngineering({
+          menuItems: result.menu.menuItems,
+          menuItemsForEngineering: result.menu.menuItemsForEngineering,
+          categoryPL: result.menu.categoryPL,
+          avgVolumeThreshold: result.menu.avgVolumeThreshold,
+          targetMargin: result.menu.targetMargin,
+        });
+      }
       const range = result.metadata.dateRange;
       const rangeLabel = range ? ` ${range.start} → ${range.end}.` : '';
       setSummary(
@@ -67,7 +77,7 @@ export function RistaSync() {
         branchesDetected: result.metadata.branchesDetected,
       });
     },
-    [setSummary, setDaily, setMetrics, setPriorMetrics, pushIngestion]
+    [setSummary, setDaily, setMetrics, setPriorMetrics, setMenuEngineering, pushIngestion]
   );
 
   const handleSync = useCallback(async () => {

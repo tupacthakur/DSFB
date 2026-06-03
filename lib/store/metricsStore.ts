@@ -64,6 +64,14 @@ export interface MetricsState {
   budgetTargets: Partial<Record<string, number>>;
 }
 
+export interface MenuEngineeringSnapshot {
+  menuItems: MenuScatterItem[];
+  menuItemsForEngineering: MenuItemForEngineering[];
+  categoryPL: CategoryPLRow[];
+  avgVolumeThreshold?: number;
+  targetMargin?: number;
+}
+
 export interface MetricsActions {
   setFlagForReview: (id: string, flag: boolean) => void;
   setFlaggedForecastDate: (date: string, flag: boolean) => void;
@@ -71,6 +79,7 @@ export interface MetricsActions {
   setDaily: (daily: DailyMetric[]) => void;
   setMetrics: (metrics: Partial<Record<MetricKey, number>>) => void;
   setPriorMetrics: (prior: Partial<Record<MetricKey, number>>) => void;
+  setMenuEngineering: (menu: MenuEngineeringSnapshot) => void;
 }
 
 const EMPTY_METRICS: Record<MetricKey, number> = {
@@ -155,11 +164,6 @@ function buildDerivedState(daily: DailyMetric[], metrics: Record<MetricKey, numb
     sparklines,
     revenueRolling7,
     radar,
-    menuItems: [] as MenuScatterItem[],
-    avgVolumeThreshold: 100,
-    targetMargin: 68,
-    menuItemsForEngineering: [] as MenuItemForEngineering[],
-    categoryPL: [] as CategoryPLRow[],
   };
 }
 
@@ -202,9 +206,6 @@ export const useMetricsStore = create<MetricsState & MetricsActions>((set) => ({
         revenueRolling7: derived.revenueRolling7,
         sparklines: derived.sparklines,
         radar: derived.radar,
-        menuItems: derived.menuItems,
-        menuItemsForEngineering: derived.menuItemsForEngineering,
-        categoryPL: derived.categoryPL,
       };
     }),
   setMetrics: (metrics) =>
@@ -215,10 +216,15 @@ export const useMetricsStore = create<MetricsState & MetricsActions>((set) => ({
         metrics: nextMetrics,
         sparklines: derived.sparklines,
         radar: derived.radar,
-        menuItems: derived.menuItems,
-        menuItemsForEngineering: derived.menuItemsForEngineering,
-        categoryPL: derived.categoryPL,
       };
+    }),
+  setMenuEngineering: (menu) =>
+    set({
+      menuItems: menu.menuItems,
+      menuItemsForEngineering: menu.menuItemsForEngineering,
+      categoryPL: menu.categoryPL,
+      ...(menu.avgVolumeThreshold != null ? { avgVolumeThreshold: menu.avgVolumeThreshold } : {}),
+      ...(menu.targetMargin != null ? { targetMargin: menu.targetMargin } : {}),
     }),
   setPriorMetrics: (prior) =>
     set((s) => ({
